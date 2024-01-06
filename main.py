@@ -39,7 +39,7 @@ def get_link(id):
     db.close()
 
     if link:
-        return redirect(link["url"])
+        return redirect(link["url"], code=301)
     else:
         return jsonify({"error": "Link not found"}), 404
 
