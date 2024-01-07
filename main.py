@@ -1,6 +1,7 @@
 from flask import Flask, request, redirect, jsonify
 import sqlite3, os
 from dotenv import load_dotenv
+import hashlib
 
 app = Flask(__name__)
 DATABASE = "links.db"
@@ -30,7 +31,11 @@ def get_or_delete_link(id):
     if request.method == "GET":
         return get_link(id)
     elif request.method == "DELETE":
-        return delete_link(id)
+        pwd=request.args.get("pwd")
+        if hashlib.sha256(pwd.encode()).hexdigest() == os.getenv("PASSWORD"):
+            return delete_link(id)
+        else:
+            return jsonify({"error": "Wrong password"}), 401
 
 
 def get_link(id):
@@ -56,9 +61,14 @@ def delete_link(id):
 @app.route("/<id>", methods=["PATCH", "POST"])
 def update_or_create_link(id):
     url = request.args.get("url")
-
+    pwd = request.args.get("pwd")
     if not url:
         return jsonify({"error": "Missing URL parameter"}), 400
+    if not pwd:
+        return jsonify({"error": "Missing password"}), 400
+    if hashlib.sha256(pwd.encode()).hexdigest() != os.getenv("PASSWORD"):
+        return jsonify({"error": "Wrong password"}), 401
+    
 
     if request.method == "PATCH":
         return update_link(id, url)
